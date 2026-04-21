@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Slots Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+        h1 { font-size: 2.5rem; color: #fbbf24; }
+        .balance {
+            background: #16a34a;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .game-card {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .game-card:hover { transform: translateY(-5px); }
+        .game-icon { font-size: 4rem; margin-bottom: 15px; }
+        .game-title { font-size: 1.5rem; margin-bottom: 10px; color: #fbbf24; }
+        .game-desc { color: #94a3b8; margin-bottom: 20px; }
+        .reels {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 3rem;
+            margin: 20px 0;
+            min-height: 80px;
+        }
+        .reel { animation: bounce 0.5s ease; }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        .bet-input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        .spin-btn {
+            width: 100%;
+            padding: 15px;
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .spin-btn:hover { background: #f59e0b; }
+        .spin-btn:disabled { background: #64748b; cursor: not-allowed; }
+        .win-glow { animation: glow 1s infinite; }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px #fbbf24; }
+            50% { box-shadow: 0 0 40px #fbbf24; }
+        }
+        .result {
+            font-size: 1.2rem;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .win { color: #4ade80; background: rgba(74, 222, 128, 0.1); }
+        .loss { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+        .history {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        .history h2 { margin-bottom: 15px; color: #fbbf24; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; }
+        .login-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .login-box {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-box h2 { text-align: center; margin-bottom: 30px; color: #fbbf24; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #94a3b8; }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #fbbf24;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .hidden { display: none; }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-box">
+            <h2>🎰 Slots Demo</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Enter password">
+            </div>
+            <button class="submit-btn" onclick="login()">Login / Register</button>
+            <p style="text-align: center; margin-top: 20px; color: #94a3b8;">
+                ⚠️ Demo: Auto-creates account with ৳10,000
+            </p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="container hidden">
+        <header>
+            <h1>🎰 Slots Demo</h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div class="balance">Balance: ৳<span id="balance">0</span></div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="games-grid">
+            <!-- Super Ace -->
+            <div class="game-card" id="game-super_ace">
+                <div class="game-icon">🃏</div>
+                <h3 class="game-title">Super Ace</h3>
+                <p class="game-desc">Classic card slots</p>
+                <div class="reels" id="reels-super_ace">
+                    <span class="reel">🂡</span>
+                    <span class="reel">🂫</span>
+                    <span class="reel">👸</span>
+                </div>
+                <input type="number" class="bet-input" id="bet-super_ace" value="100" min="10" step="10">
+                <button class="spin-btn" onclick="spin('super_ace')">SPIN</button>
+                <div id="result-super_ace"></div>
+            </div>
+
+            <!-- Fortune Gems -->
+            <div class="game-card" id="game-fortune_gems">
+                <div class="game-icon">💎</div>
+                <h3 class="game-title">Fortune Gems</h3>
+                <p class="game-desc">Match the gems</p>
+                <div class="reels" id="reels-fortune_gems">
+                    <span class="reel">💎</span>
+                    <span class="reel">🔷</span>
+                    <span class="reel">🔶</span>
+                </div>
+                <input type="number" class="bet-input" id="bet-fortune_gems" value="100" min="10" step="10">
+                <button class="spin-btn" onclick="spin('fortune_gems')">SPIN</button>
+                <div id="result-fortune_gems"></div>
+            </div>
+
+            <!-- Lucky 777 -->
+            <div class="game-card" id="game-lucky_777">
+                <div class="game-icon">🎰</div>
+                <h3 class="game-title">Lucky 777</h3>
+                <p class="game-desc">Traditional slots</p>
+                <div class="reels" id="reels-lucky_777">
+                    <span class="reel">7️⃣</span>
+                    <span class="reel">🍒</span>
+                    <span class="reel">🍋</span>
+                </div>
+                <input type="number" class="bet-input" id="bet-lucky_777" value="100" min="10" step="10">
+                <button class="spin-btn" onclick="spin('lucky_777')">SPIN</button>
+                <div id="result-lucky_777"></div>
+            </div>
+        </div>
+
+        <div class="history">
+            <h2>📜 Game History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Game</th>
+                        <th>Bet</th>
+                        <th>Win</th>
+                        <th>Result</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let user = null;
+        let balance = 0;
+        let history = [];
+
+        const symbols = {
+            super_ace: ['🂡', '🂫', '👸', '🂮', '💎'],
+            fortune_gems: ['💎', '🔷', '🔶', '💠', '⭐'],
+            lucky_777: ['7️⃣', '🍒', '🍋', '🍊', '🔔']
+        };
+
+        const payouts = {
+            super_ace: { '🂡': 10, '🂫': 5, '👸': 3, '🂮': 2, '💎': 50 },
+            fortune_gems: { '💎': 50, '🔷': 10, '🔶': 8, '💠': 5, '⭐': 3 },
+            lucky_777: { '7️⃣': 100, '🍒': 5, '🍋': 3, '🍊': 4, '🔔': 10 }
+        };
+
+        function login() {
+            const username = document.getElementById('username').value;
+            if (!username) return alert('Enter username');
+            
+            user = username;
+            balance = 10000;
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            updateBalance();
+        }
+
+        function logout() {
+            user = null;
+            balance = 0;
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('app').classList.add('hidden');
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').textContent = balance;
+        }
+
+        function getRandomSymbol(game) {
+            const syms = symbols[game];
+            return syms[Math.floor(Math.random() * syms.length)];
+        }
+
+        function calculateWin(game, reels, bet) {
+            const payout = payouts[game];
+            if (reels[0] === reels[1] && reels[1] === reels[2]) {
+                return bet * payout[reels[0]] * 3;
+            }
+            if (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]) {
+                const match = reels[0] === reels[1] ? reels[0] : reels[1] === reels[2] ? reels[1] : reels[0];
+                return bet * payout[match];
+            }
+            return 0;
+        }
+
+        function spin(game) {
+            const betInput = document.getElementById(`bet-${game}`);
+            const bet = parseInt(betInput.value);
+            
+            if (bet > balance) {
+                alert('Insufficient balance!');
+                return;
+            }
+            if (bet < 10) {
+                alert('Minimum bet is ৳10');
+                return;
+            }
+
+            balance -= bet;
+            updateBalance();
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Spinning...';
+
+            // Animate reels
+            const reelsEl = document.getElementById(`reels-${game}`);
+            let spins = 0;
+            const interval = setInterval(() => {
+                reelsEl.innerHTML = `
+                    <span class="reel">${getRandomSymbol(game)}</span>
+                    <span class="reel">${getRandomSymbol(game)}</span>
+                    <span class="reel">${getRandomSymbol(game)}</span>
+                `;
+                spins++;
+                if (spins >= 10) {
+                    clearInterval(interval);
+                    finalizeSpin(game, bet, btn);
+                }
+            }, 100);
+        }
+
+        function finalizeSpin(game, bet, btn) {
+            const reels = [getRandomSymbol(game), getRandomSymbol(game), getRandomSymbol(game)];
+            const win = calculateWin(game, reels, bet);
+            const isWin = win > 0;
+
+            if (isWin) {
+                balance += win;
+            }
+
+            updateBalance();
+            btn.disabled = false;
+            btn.textContent = 'SPIN';
+
+            const reelsEl = document.getElementById(`reels-${game}`);
+            reelsEl.innerHTML = reels.map(s => `<span class="reel">${s}</span>`).join('');
+
+            const resultEl = document.getElementById(`result-${game}`);
+            const cardEl = document.getElementById(`game-${game}`);
+            
+            if (isWin) {
+                resultEl.innerHTML = `<div class="result win">🎉 Won ৳${win}!</div>`;
+                cardEl.classList.add('win-glow');
+                setTimeout(() => cardEl.classList.remove('win-glow'), 2000);
+            } else {
+                resultEl.innerHTML = `<div class="result loss">Try again!</div>`;
+            }
+
+            // Add to history
+            history.unshift({
+                game: game.replace('_', ' '),
+                bet,
+                win,
+                result: isWin ? 'WIN' : 'LOSS',
+                time: new Date().toLocaleTimeString()
+            });
+            if (history.length > 10) history.pop();
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const tbody = document.getElementById('history-body');
+            tbody.innerHTML = history.map(h => `
+                <tr>
+                    <td>${h.game}</td>
+                    <td>৳${h.bet}</td>
+                    <td style="color: ${h.win > 0 ? '#4ade80' : '#f87171'}">৳${h.win}</td>
+                    <td>${h.result === 'WIN' ? '✅' : '❌'}</td>
+                    <td>${h.time}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
